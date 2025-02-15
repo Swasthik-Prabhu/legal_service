@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from models.user import User, UserUpdate
 from services.auth_service import get_current_user
 from database import init_db
+from typing import List
 
 router = APIRouter()
 
@@ -54,3 +55,13 @@ async def delete_user(username: str, current_user: User = Depends(get_current_us
 
     await user.delete()
     return {"message": "User deleted successfully"}
+
+
+@router.get("/lawyers", response_model=List[dict])
+async def get_all_lawyers(current_user: User = Depends(get_current_user)):
+    """Fetch all users who have the role of 'lawyer'"""
+    lawyers = await User.find(User.role == "lawyer").to_list()
+    if not lawyers:
+        raise HTTPException(status_code=404, detail="No lawyers found")
+    
+    return [lawyer.to_dict() for lawyer in lawyers]
